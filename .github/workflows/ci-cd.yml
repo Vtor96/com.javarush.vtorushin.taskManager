@@ -91,26 +91,3 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/task-manager:latest
             ${{ secrets.DOCKER_USERNAME }}/task-manager:${{ github.sha }}
 
-  # ─────────────────────────────────────────────
-  # Стадия 4: ДЕПЛОЙ (опционально — только если есть сервер)
-  # ─────────────────────────────────────────────
-  deploy:
-    name: Deploy to Server
-    runs-on: ubuntu-latest
-    needs: dockerize
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/task-manager:latest
-            docker stop task-manager || true
-            docker rm task-manager || true
-            docker run -d --name task-manager \
-              -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/taskdb \
-              ${{ secrets.DOCKER_USERNAME }}/task-manager:latest
