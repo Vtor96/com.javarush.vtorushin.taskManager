@@ -1,0 +1,154 @@
+{
+  "title": "Task Manager — Spring Boot",
+  "tags": ["spring-boot", "task-manager"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": {"from": "now-1h", "to": "now"},
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {"text": "Prometheus", "value": "Prometheus"},
+        "label": "Data Source"
+      }
+    ]
+  },
+  "panels": [
+    {"type": "row", "title": "HTTP запросы", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}, "collapsed": false, "panels": []},
+    {
+      "type": "timeseries", "title": "RPS — запросы в секунду",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "sum(rate(http_server_requests_seconds_count{application=\"task-manager\"}[1m])) by (method)", "legendFormat": "{{method}}", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries", "title": "Latency p95 — время ответа (95-й перцентиль)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"task-manager\"}[1m])) by (le, method))", "legendFormat": "{{method}}", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries", "title": "Статус-коды ответов",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 9},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "sum(rate(http_server_requests_seconds_count{application=\"task-manager\"}[1m])) by (status)", "legendFormat": "{{status}}", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries", "title": "Ошибки 4xx/5xx — RPS",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 9},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{application=\"task-manager\", status=~\"4..\"}[1m]))", "legendFormat": "4xx", "refId": "A"},
+        {"expr": "sum(rate(http_server_requests_seconds_count{application=\"task-manager\", status=~\"5..\"}[1m]))", "legendFormat": "5xx", "refId": "B"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries", "title": "Среднее время ответа по endpoint",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 9},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "sum(rate(http_server_requests_seconds_sum{application=\"task-manager\"}[1m])) by (uri) / sum(rate(http_server_requests_seconds_count{application=\"task-manager\"}[1m])) by (uri)", "legendFormat": "{{uri}}", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {"type": "row", "title": "JVM", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 17}, "collapsed": false, "panels": []},
+    {
+      "type": "timeseries", "title": "Heap usage — использование памяти",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 18},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [
+        {"expr": "sum(jvm_memory_used_bytes{area=\"heap\"}) / 1048576", "legendFormat": "Used", "refId": "A"},
+        {"expr": "sum(jvm_memory_max_bytes{area=\"heap\"}) / 1048576", "legendFormat": "Max", "refId": "B"},
+        {"expr": "sum(jvm_memory_committed_bytes{area=\"heap\"}) / 1048576", "legendFormat": "Committed", "refId": "C"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "MB"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries", "title": "CPU usage — загрузка процессора",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 18},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [
+        {"expr": "process_cpu_usage{application=\"task-manager\"} * 100", "legendFormat": "Process CPU", "refId": "A"},
+        {"expr": "system_cpu_usage{application=\"task-manager\"} * 100", "legendFormat": "System CPU", "refId": "B"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "percent"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries", "title": "GC pauses — время сборок мусора",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 26},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "rate(jvm_gc_pause_seconds_sum{application=\"task-manager\"}[1m])", "legendFormat": "{{action}}", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries", "title": "Live threads — потоки JVM",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 26},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [
+        {"expr": "jvm_threads_live_threads{application=\"task-manager\"}", "legendFormat": "Live", "refId": "A"},
+        {"expr": "jvm_threads_daemon_threads{application=\"task-manager\"}", "legendFormat": "Daemon", "refId": "B"},
+        {"expr": "jvm_threads_peak_threads{application=\"task-manager\"}", "legendFormat": "Peak", "refId": "C"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {"type": "row", "title": "База данных (HikariCP)", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 34}, "collapsed": false, "panels": []},
+    {
+      "type": "timeseries", "title": "Активные подключения",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 35},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "hikaricp_connections_active{application=\"task-manager\"}", "legendFormat": "Active", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries", "title": "Пул подключений — всего / idle",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 35},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "hikaricp_connections{application=\"task-manager\"}", "legendFormat": "Total", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {"type": "row", "title": "Статус приложения", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 43}, "collapsed": false, "panels": []},
+    {
+      "type": "stat", "title": "Uptime — время работы",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 44},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "process_uptime_seconds{application=\"task-manager\"} / 3600", "legendFormat": "Hours", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "h"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}
+    },
+    {
+      "type": "gauge", "title": "Heap used",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 44},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "sum(jvm_memory_used_bytes{area=\"heap\"}) / 1048576", "legendFormat": "MB", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "MB"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}}
+    },
+    {
+      "type": "stat", "title": "Всего запросов (за минуту)",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 44},
+      "datasource": {"type": "prometheus", "uid": "$datasource"},
+      "targets": [{"expr": "sum(increase(http_server_requests_seconds_count{application=\"task-manager\"}[1m]))", "legendFormat": "Total", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}
+    }
+  ],
+  "uid": "task-manager-spring",
+  "editable": true
+}

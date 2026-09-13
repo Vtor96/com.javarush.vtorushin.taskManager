@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  liquibase:
+    enabled: false
+
+jwt:
+  secret: "8mzXFrvPkJmEPryYuZ9c1n3-HcJ85aP7Ldh_LXzlQJlDdWs8YUZABmE_uuVuhgaC"
+  expiration-ms: 86400000
+
+server:
+  port: 0
+
+logging:
+  level:
+    org.javarush.vtorushin.taskmanager: DEBUG
+    org.springframework.security: WARN

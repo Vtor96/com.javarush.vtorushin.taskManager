@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: task-manager
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/taskdb
+    username: postgres
+    password: 123456789**
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yml
+    enabled: true
+
+jwt:
+  secret: "8mzXFrvPkJmEPryYuZ9c1n3-HcJ85aP7Ldh_LXzlQJlDdWs8YUZABmE_uuVuhgaC"
+  expiration-ms: 86400000
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.95, 0.99
+
+logging:
+  level:
+    org.javarush.vtorushin.taskmanager: INFO
+    org.springframework.security: WARN
