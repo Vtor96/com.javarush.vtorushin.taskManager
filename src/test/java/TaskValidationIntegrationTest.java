@@ -8,8 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class TaskValidationIntegrationTest extends AbstractIntegrationTest {
 
-    // --- Валидация задач ---
-
+    /** Пустой заголовок задачи — 400 Bad Request */
     @Test
     void taskEmptyTitle() throws Exception {
         String token = registerAndGetToken();
@@ -23,6 +22,7 @@ class TaskValidationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.messages").isNotEmpty());
     }
 
+    /** Заголовок длиннее 200 символов — 400 Bad Request */
     @Test
     void taskTitleTooLong() throws Exception {
         String token = registerAndGetToken();
@@ -36,6 +36,7 @@ class TaskValidationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.messages").isNotEmpty());
     }
 
+    /** Описание длиннее 2000 символов — 400 Bad Request */
     @Test
     void taskDescriptionTooLong() throws Exception {
         String token = registerAndGetToken();
@@ -49,8 +50,7 @@ class TaskValidationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.messages").isNotEmpty());
     }
 
-    // --- Валидация регистрации ---
-
+    /** Пустое имя пользователя — 400 Bad Request */
     @Test
     void registerEmptyUsername() throws Exception {
         var req = new RegisterRequest("", "password123", uniqueEmail());
@@ -61,6 +61,7 @@ class TaskValidationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /** Пароль короче 6 символов — 400 Bad Request */
     @Test
     void registerShortPassword() throws Exception {
         var req = new RegisterRequest(uniqueUsername(), "123", uniqueEmail());
@@ -71,6 +72,7 @@ class TaskValidationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /** Некорректный email — 400 Bad Request */
     @Test
     void registerInvalidEmail() throws Exception {
         var req = new RegisterRequest(uniqueUsername(), "password123", "not-an-email");
@@ -81,6 +83,7 @@ class TaskValidationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /** Имя пользователя длиннее 50 символов — 400 Bad Request */
     @Test
     void registerUsernameTooLong() throws Exception {
         var req = new RegisterRequest("A".repeat(51), "password123", uniqueEmail());

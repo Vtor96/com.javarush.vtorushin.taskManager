@@ -15,7 +15,7 @@ spring:
     enabled: false
 
 jwt:
-  secret: "8mzXFrvPkJmEPryYuZ9c1n3-HcJ85aP7Ldh_LXzlQJlDdWs8YUZABmE_uuVuhgaC"
+  secret: "test-secret-key-for-unit-tests-only-not-for-production-use"
   expiration-ms: 86400000
 
 server:

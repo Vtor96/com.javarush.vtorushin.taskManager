@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class TaskSecurityIntegrationTest extends AbstractIntegrationTest {
 
+    /** Создание задачи без токена — 403 Forbidden */
     @Test
     void createTaskWithoutToken() throws Exception {
         var req = new TaskCreateRequest("Без токена", "опис", null);
@@ -18,12 +19,14 @@ class TaskSecurityIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    /** Получение задачи без токена — 403 Forbidden */
     @Test
     void getTaskWithoutToken() throws Exception {
         mockMvc.perform(get("/api/tasks/1"))
                 .andExpect(status().isForbidden());
     }
 
+    /** Получение чужой задачи — 403 Forbidden */
     @Test
     void getOtherUserTaskForbidden() throws Exception {
         String tokenA = registerAndGetToken();
@@ -36,6 +39,7 @@ class TaskSecurityIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    /** Обновление чужой задачи — 403 Forbidden */
     @Test
     void updateOtherUserTaskForbidden() throws Exception {
         String tokenA = registerAndGetToken();
@@ -53,6 +57,7 @@ class TaskSecurityIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    /** Удаление чужой задачи — 403 Forbidden */
     @Test
     void deleteOtherUserTaskForbidden() throws Exception {
         String tokenA = registerAndGetToken();
@@ -65,6 +70,7 @@ class TaskSecurityIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    /** Запрос с невалидным токеном — 403 Forbidden */
     @Test
     void invalidTokenRejected() throws Exception {
         mockMvc.perform(get("/api/tasks")
@@ -72,6 +78,7 @@ class TaskSecurityIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    /** Каждый пользователь видит только свои задачи */
     @Test
     void eachUserSeesOnlyOwnTasks() throws Exception {
         String tokenA = registerAndGetToken();

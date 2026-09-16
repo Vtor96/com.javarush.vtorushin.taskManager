@@ -29,10 +29,12 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final TaskMetrics taskMetrics;
 
-    public TaskService(TaskRepository taskRepository, UserRepository userRepository) {
+    public TaskService(TaskRepository taskRepository, UserRepository userRepository, TaskMetrics taskMetrics) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.taskMetrics = taskMetrics;
     }
 
     public TaskResponse createTask(TaskCreateRequest request, UserDetails userDetails) {
@@ -45,6 +47,9 @@ public class TaskService {
         task.setUser(user);
 
         Task savedTask = taskRepository.save(task);
+        taskMetrics.tasksCreated.increment();
+        taskMetrics.tasksActive.incrementAndGet();
+
         logger.info("Создана задача id={} для пользователя '{}'",
                 savedTask.getId(),
                 user.getUsername());
@@ -53,6 +58,12 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getAllTasksForUser(UserDetails userDetails) {
+        if (isAdmin(userDetails)) {
+            return taskRepository.findAllByDeletedFalse().stream()
+                    .map(this::mapToResponse)
+                    .toList();
+        }
+
         User user = getUserByUsername(userDetails.getUsername());
         return taskRepository.findAllByUserAndDeletedFalse(user).stream()
                 .map(this::mapToResponse)
@@ -61,6 +72,12 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getTasksByStatus(UserDetails userDetails, TaskStatus status) {
+        if (isAdmin(userDetails)) {
+            return taskRepository.findAllByDeletedFalseAndStatus(status).stream()
+                    .map(this::mapToResponse)
+                    .toList();
+        }
+
         User user = getUserByUsername(userDetails.getUsername());
         return taskRepository.findAllByUserAndStatusAndDeletedFalse(user, status).stream()
                 .map(this::mapToResponse)
@@ -69,6 +86,12 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getTasksWithDeadlineBefore(UserDetails userDetails, LocalDateTime deadline) {
+        if (isAdmin(userDetails)) {
+            return taskRepository.findAllByDeletedFalseAndDeadlineBefore(deadline).stream()
+                    .map(this::mapToResponse)
+                    .toList();
+        }
+
         User user = getUserByUsername(userDetails.getUsername());
         return taskRepository.findAllByUserAndDeadlineBeforeAndDeletedFalse(user, deadline).stream()
                 .map(this::mapToResponse)
@@ -108,7 +131,27 @@ public class TaskService {
         Task task = findTaskAndCheckOwnership(taskId, userDetails);
         task.setDeleted(true);
         taskRepository.save(task);
+        taskMetrics.tasksDeleted.increment();
+        taskMetrics.tasksActive.decrementAndGet();
+
         logger.info("Удалена задача id={} пользователем '{}'", taskId, userDetails.getUsername());
+    }
+
+    public void restoreTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Задача с id " + taskId + " не найдена"));
+
+        if (!task.isDeleted()) {
+            throw new IllegalStateException("Задача не была удалена");
+        }
+
+        task.setDeleted(false);
+        taskRepository.save(task);
+        taskMetrics.tasksRestored.increment();
+        taskMetrics.tasksActive.incrementAndGet();
+
+        logger.info("Восстановлена задача id={}", taskId);
     }
 
     private Task findTaskAndCheckOwnership(Long taskId, UserDetails userDetails) {
@@ -116,13 +159,18 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Задача с id " + taskId + " не найдена"));
 
-        if (!task.getUser().getUsername().equals(userDetails.getUsername())) {
+        if (!isAdmin(userDetails) && !task.getUser().getUsername().equals(userDetails.getUsername())) {
             logger.warn("Попытка доступа к задаче id={} пользователем '{}'",
                     taskId,
                     userDetails.getUsername());
             throw new ResourceAccessDeniedException("У вас нет доступа к этой задаче");
         }
         return task;
+    }
+
+    private boolean isAdmin(UserDetails userDetails) {
+        return userDetails.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 
     private User getUserByUsername(String username) {

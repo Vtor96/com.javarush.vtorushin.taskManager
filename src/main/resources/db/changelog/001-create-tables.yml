@@ -31,6 +31,12 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: role
+                  type: varchar(30)
+                  defaultValue: 'ROLE_USER'
+                  constraints:
+                    nullable: false
+              - column:
                   name: created_at
                   type: timestamp
                   constraints:

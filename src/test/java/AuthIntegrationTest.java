@@ -8,8 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class AuthIntegrationTest extends AbstractIntegrationTest {
 
-    // --- Регистрация ---
-
+    /** Успешная регистрация — 201, токен и тип токена в ответе */
     @Test
     void registerSuccess() throws Exception {
         var req = new RegisterRequest(uniqueUsername(), "password123", uniqueEmail());
@@ -22,6 +21,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.tokenType").value("Bearer"));
     }
 
+    /** Регистрация с уже занятым именем — 409 Conflict */
     @Test
     void registerDuplicateUsername() throws Exception {
         String username = uniqueUsername();
@@ -40,6 +40,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isConflict());
     }
 
+    /** Регистрация с уже занятым email — 409 Conflict */
     @Test
     void registerDuplicateEmail() throws Exception {
         String email = uniqueEmail();
@@ -58,8 +59,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isConflict());
     }
 
-    // --- Логин ---
-
+    /** Успешный логин — 200, токен в ответе */
     @Test
     void loginSuccess() throws Exception {
         String username = uniqueUsername();
@@ -76,6 +76,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.tokenType").value("Bearer"));
     }
 
+    /** Логин с неверным паролем — 401 Unauthorized */
     @Test
     void loginWrongPassword() throws Exception {
         String username = uniqueUsername();
@@ -89,6 +90,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    /** Логин несуществующего пользователя — 401 Unauthorized */
     @Test
     void loginNonExistentUser() throws Exception {
         var loginReq = new LoginRequest("ghost_user", "password123");

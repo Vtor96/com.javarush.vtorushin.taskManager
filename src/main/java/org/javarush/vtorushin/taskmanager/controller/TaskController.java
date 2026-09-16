@@ -1,6 +1,7 @@
 package org.javarush.vtorushin.taskmanager.controller;
 
 import jakarta.validation.Valid;
+
 import org.javarush.vtorushin.taskmanager.dto.task.TaskCreateRequest;
 import org.javarush.vtorushin.taskmanager.dto.task.TaskResponse;
 import org.javarush.vtorushin.taskmanager.dto.task.TaskUpdateRequest;
@@ -10,6 +11,7 @@ import org.javarush.vtorushin.taskmanager.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -29,6 +31,7 @@ public class TaskController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<TaskResponse> createTask(
             @Valid @RequestBody TaskCreateRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -37,6 +40,7 @@ public class TaskController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<TaskResponse>> getAllTasks(
             @RequestParam(name = "status", required = false) TaskStatus status,
             @RequestParam(name = "deadlineBefore", required = false) LocalDateTime deadlineBefore,
@@ -52,6 +56,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<TaskResponse> getTaskById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -59,6 +64,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long id,
             @Valid @RequestBody TaskUpdateRequest request,
@@ -67,10 +73,18 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Void> deleteTask(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         taskService.deleteTask(id, userDetails);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> restoreTask(@PathVariable Long id) {
+        taskService.restoreTask(id);
         return ResponseEntity.noContent().build();
     }
 }

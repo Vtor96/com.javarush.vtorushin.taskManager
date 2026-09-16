@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class TaskFilterIntegrationTest extends AbstractIntegrationTest {
 
+    /** Меняет статус задачи через PUT-запрос */
     private void changeStatus(String token, Long taskId, TaskStatus status) throws Exception {
         var req = new TaskUpdateRequest();
         req.setStatus(status);
@@ -23,6 +24,7 @@ class TaskFilterIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    /** Фильтр по статусу TODO — возвращает только задачи со статусом TODO */
     @Test
     void filterByStatusTodo() throws Exception {
         String token = registerAndGetToken();
@@ -40,6 +42,7 @@ class TaskFilterIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[0].title").value("TODO задача"));
     }
 
+    /** Фильтр по статусу IN_PROGRESS — возвращает только задачи в работе */
     @Test
     void filterByStatusInProgress() throws Exception {
         String token = registerAndGetToken();
@@ -55,6 +58,7 @@ class TaskFilterIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[0].title").value("IN_PROGRESS задача"));
     }
 
+    /** Фильтр по статусу DONE — возвращает только завершённые задачи */
     @Test
     void filterByStatusDone() throws Exception {
         String token = registerAndGetToken();
@@ -70,6 +74,7 @@ class TaskFilterIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[0].title").value("DONE задача"));
     }
 
+    /** Фильтр по дедлайну — возвращает задачи с дедлайном раньше указанной даты */
     @Test
     void filterByDeadlineBefore() throws Exception {
         String token = registerAndGetToken();
@@ -89,6 +94,7 @@ class TaskFilterIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[0].title").value("Скоро"));
     }
 
+    /** Фильтр по дедлайну — возвращает все задачи, попадающие в диапазон */
     @Test
     void filterByDeadlineBeforeReturnsAllMatching() throws Exception {
         String token = registerAndGetToken();

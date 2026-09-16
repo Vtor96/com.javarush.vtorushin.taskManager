@@ -1,5 +1,8 @@
 package org.javarush.vtorushin.taskmanager.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,11 +15,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import io.jsonwebtoken.security.SignatureException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -35,10 +40,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        try {
+
             String token = extractTokenFromRequest(request);
 
-            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+        if (StringUtils.hasText(token)) {
+            try {
                 String username = jwtTokenProvider.extractUsername(token);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
@@ -47,10 +53,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (ExpiredJwtException e) {
+                logger.warn("Истёк срок действия JWT-токена для запроса {}", request.getRequestURI());
+                SecurityContextHolder.clearContext();
+            } catch (SignatureException e) {
+                logger.error("Неверная подпись JWT-токена для {}", request.getRequestURI());
+                SecurityContextHolder.clearContext();
+            } catch (MalformedJwtException e) {
+                logger.warn("Некорректный формат JWT-токена для {}", request.getRequestURI());
+                SecurityContextHolder.clearContext();
+            } catch (Exception e) {
+                logger.error("Неожиданная ошибка при обработке JWT-токена", e);
+                SecurityContextHolder.clearContext();
             }
-        } catch (Exception e) {
-            logger.warn("Failed to process JWT token: {}", e.getMessage());
-            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

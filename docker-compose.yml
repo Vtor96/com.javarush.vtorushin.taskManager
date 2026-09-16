@@ -5,13 +5,13 @@ services:
     environment:
       POSTGRES_DB: task_manager
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "123456789**"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d task_manager"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -25,11 +25,11 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/task_manager
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: "123456789**"
+      SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_LIQUIBASE_CHANGE-LOG: classpath:db/changelog/db.changelog-master.yml
       SPRING_LIQUIBASE_ENABLED: "true"
-      JWT_SECRET: "8mzXFrvPkJmEPryYuZ9c1n3-HcJ85aP7Ldh_LXzlQJlDdWs8YUZABmE_uuVuhgaC"
+      JWT_SECRET: "${JWT_SECRET}"
       JWT_EXPIRATION_MS: "86400000"
     ports:
       - "8080:8080"

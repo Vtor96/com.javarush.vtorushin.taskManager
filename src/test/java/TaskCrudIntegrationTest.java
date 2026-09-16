@@ -10,8 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class TaskCrudIntegrationTest extends AbstractIntegrationTest {
 
-    // --- Создание ---
-
+    /** Успешное создание задачи — 201, статус TODO, поле createdAt заполнено */
     @Test
     void createTaskSuccess() throws Exception {
         String token = registerAndGetToken();
@@ -28,8 +27,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.createdAt").exists());
     }
 
-    // --- Чтение ---
-
+    /** Получение задачи по id — 200, корректные данные */
     @Test
     void getTaskByIdSuccess() throws Exception {
         String token = registerAndGetToken();
@@ -42,6 +40,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.title").value("Задача для получения"));
     }
 
+    /** Получение несуществующей задачи — 404 Not Found */
     @Test
     void getTaskByIdNotFound() throws Exception {
         String token = registerAndGetToken();
@@ -51,6 +50,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /** Получение всех задач пользователя — 200, список из 3 элементов */
     @Test
     void getAllTasks() throws Exception {
         String token = registerAndGetToken();
@@ -64,6 +64,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(3)));
     }
 
+    /** Получение всех задач, когда их нет — 200, пустой список */
     @Test
     void getAllTasksEmptyList() throws Exception {
         String token = registerAndGetToken();
@@ -74,8 +75,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(0)));
     }
 
-    // --- Обновление ---
-
+    /** Полное обновление задачи — 200, новые данные, updatedAt заполнено */
     @Test
     void updateTaskSuccess() throws Exception {
         String token = registerAndGetToken();
@@ -97,6 +97,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.updatedAt").exists());
     }
 
+    /** Обновление несуществующей задачи — 404 Not Found */
     @Test
     void updateTaskNotFound() throws Exception {
         String token = registerAndGetToken();
@@ -110,6 +111,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /** Частичное обновление (только статус) — 200, остальные поля не меняются */
     @Test
     void updateTaskPartial() throws Exception {
         String token = registerAndGetToken();
@@ -128,8 +130,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.status").value("DONE"));
     }
 
-    // --- Удаление ---
-
+    /** Удаление задачи — 204, повторное получение даёт 404 */
     @Test
     void deleteTaskSuccess() throws Exception {
         String token = registerAndGetToken();
@@ -144,6 +145,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /** Удаление несуществующей задачи — 404 Not Found */
     @Test
     void deleteTaskNotFound() throws Exception {
         String token = registerAndGetToken();
@@ -153,6 +155,7 @@ class TaskCrudIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /** После удаления задача не появляется в общем списке */
     @Test
     void taskNotVisibleAfterDeletion() throws Exception {
         String token = registerAndGetToken();

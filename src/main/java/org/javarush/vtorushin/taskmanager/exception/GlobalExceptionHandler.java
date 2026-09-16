@@ -1,5 +1,9 @@
 package org.javarush.vtorushin.taskmanager.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -20,6 +24,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleUserAlreadyExists(UserAlreadyExistsException exception) {
         return buildErrorResponse(exception.getMessage(), HttpStatus.CONFLICT);
@@ -38,6 +44,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException exception) {
         return buildErrorResponse("Неверное имя пользователя или пароль", HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleIntegrityViolation(DataIntegrityViolationException exception) {
+        logger.warn("Нарушение целостности данных: {}", exception.getMessage());
+        return buildErrorResponse("Произошла ошибка сохранения (возможно, дубликат)", HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -64,5 +76,10 @@ public class GlobalExceptionHandler {
         body.put("error", status.getReasonPhrase());
         body.put("message", message);
         return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException exception) {
+        return buildErrorResponse(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }
