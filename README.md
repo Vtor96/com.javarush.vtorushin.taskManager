@@ -59,61 +59,73 @@ Prometheus на порту 9090 (сбор метрик с /actuator/prometheus)
 Grafana на порту 3000 (логин admin / пароль admin, дашборды автопровижены)
 
 Проверка состояния приложения:
-curl http://localhost:8080/actuator/health
+```curl http://localhost:8080/actuator/health```
 
 ### Вариант 2: Локально (только приложение)
 Запустите PostgreSQL (локально или через Docker):
-docker run -d --name taskmanager-db \
+```docker run -d --name taskmanager-db \
   -e POSTGRES_DB=taskdb \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=your_password \
   -p 5432:5432 \
   postgres:15-alpine
+```
+
 Соберите и запустите:
-mvn clean package
+```mvn clean package
 java -jar target/task-manager-1.0-SNAPSHOT.jar \
   --spring.datasource.password=your_password \
   --jwt.secret=your_secret_key_at_least_64_chars_long_for_hmac_sha256
+```
+
 Или импортируйте проект в IntelliJ IDEA и запустите TaskManagerApplication напрямую.
 
 ### Первый запуск: регистрация и логин
 # Регистрация
-curl -X POST http://localhost:8080/api/auth/register \
+```curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"testuser","password":"password123","email":"test@test.com"}'
+```
 
 # Ответ: {"token":"eyJ...","tokenType":"Bearer"}
 
 # Логин
-curl -X POST http://localhost:8080/api/auth/login \
+```curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"testuser","password":"password123"}'
+```
 
 # Создание задачи
-curl -X POST http://localhost:8080/api/tasks \
+```curl -X POST http://localhost:8080/api/tasks \
   -H "Authorization: Bearer eyJ..." \
   -H "Content-Type: application/json" \
   -d '{"title":"Купить молоко","description":"2 литра","deadline":null}'
+```
 
 # Получение всех задач
-curl http://localhost:8080/api/tasks \
+```curl http://localhost:8080/api/tasks \
   -H "Authorization: Bearer eyJ..."
+```
 
 # Фильтр по статусу
-curl "http://localhost:8080/api/tasks?status=TODO" \
+```curl "http://localhost:8080/api/tasks?status=TODO" \
   -H "Authorization: Bearer eyJ..."
+```
 
 # Фильтр по дедлайну
-curl "http://localhost:8080/api/tasks?deadlineBefore=2026-10-01T00:00:00" \
+```curl "http://localhost:8080/api/tasks?deadlineBefore=2026-10-01T00:00:00" \
   -H "Authorization: Bearer eyJ..."
+```
 
 # Удаление задачи
-curl -X DELETE http://localhost:8080/api/tasks/1 \
+```curl -X DELETE http://localhost:8080/api/tasks/1 \
   -H "Authorization: Bearer eyJ..."
+```
 
 # Восстановление (только админ)
-curl -X PATCH http://localhost:8080/api/tasks/1/restore \
+```curl -X PATCH http://localhost:8080/api/tasks/1/restore \
   -H "Authorization: Bearer eyJ_admin_token..."
+```
 
 ### Тесты
 Интеграционные тесты запускаются на встроенной H2 (профиль test), Liquibase отключён — схема создаётся Hibernate (ddl-auto = create-drop). Базовый класс AbstractIntegrationTest предоставляет хелперы для регистрации, получения токенов и создания задач.
@@ -125,7 +137,7 @@ curl -X PATCH http://localhost:8080/api/tasks/1/restore \
 - TaskValidationIntegrationTest - Пустой заголовок, слишком длинный заголовок, слишком длинное описание, пустое имя, короткий пароль, некорректный email, слишком длинное имя.
 
 Запуск:
-mvn test
+```mvn test```
 
 ### Особенности
 - Мягкое удаление: задачи не удаляются физически — флаг deleted = true, что позволяет админу восстанавливать их через PATCH /{id}/restore. Обычный запрос findByIdAndDeletedFalse скрывает удалённые задачи.
