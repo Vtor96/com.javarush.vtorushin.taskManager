@@ -53,10 +53,10 @@ JWT_EXPIRATION_MS=86400000
 
 Поднимутся:
 
-PostgreSQL на порту 5432 (с миграциями Liquibase при старте приложения)
-Task Manager на порту 8080
-Prometheus на порту 9090 (сбор метрик с /actuator/prometheus)
-Grafana на порту 3000 (логин admin / пароль admin, дашборды автопровижены)
+- PostgreSQL на порту 5432 (с миграциями Liquibase при старте приложения)
+ Task Manager на порту 8080
+- Prometheus на порту 9090 (сбор метрик с /actuator/prometheus)
+- Grafana на порту 3000 (логин admin / пароль admin, дашборды автопровижены)
 
 Проверка состояния приложения:
 ```curl http://localhost:8080/actuator/health```
@@ -87,7 +87,7 @@ java -jar target/task-manager-1.0-SNAPSHOT.jar \
   -d '{"username":"testuser","password":"password123","email":"test@test.com"}'
 ```
 
-### Ответ: {"token":"eyJ...","tokenType":"Bearer"}
+**Ответ: {"token":"eyJ...","tokenType":"Bearer"}**
 
 ### Логин
 ```curl -X POST http://localhost:8080/api/auth/login \
@@ -128,24 +128,24 @@ java -jar target/task-manager-1.0-SNAPSHOT.jar \
 ```
 
 ## Тесты
-Интеграционные тесты запускаются на встроенной H2 (профиль test), Liquibase отключён — схема создаётся Hibernate (ddl-auto = create-drop). Базовый класс AbstractIntegrationTest предоставляет хелперы для регистрации, получения токенов и создания задач.
-- AuthIntegrationTest - Регистрация (успех, дубликат имени, дубликат email), логин (успех, неверный пароль, несуществующий пользователь).
-- TaskCrudIntegrationTest - Создание, получение по id, список задач (пустой и заполненный), полное и частичное обновление, удаление, скрытие удалённой задачи из списка.
-- TaskAdminIntegrationTest - Админ видит все задачи, удаляет и восстанавливает чужие задачи, юзер не может восстановить, восстановление несуществующей и уже активной задачи.
-- TaskSecurityIntegrationTest - Доступ без токена (403), доступ с невалидным токеном (403), доступ к чужой задаче (403), изоляция данных между пользователями.
-- TaskFilterIntegrationTest - Фильтр по статусу (TODO, IN_PROGRESS, DONE), фильтр по дедлайну (до даты, диапазон), пустой результат.
-- TaskValidationIntegrationTest - Пустой заголовок, слишком длинный заголовок, слишком длинное описание, пустое имя, короткий пароль, некорректный email, слишком длинное имя.
+Интеграционные тесты запускаются на встроенной H2 (профиль test), Liquibase отключён - схема создаётся Hibernate (ddl-auto = create-drop). Базовый класс AbstractIntegrationTest предоставляет хелперы для регистрации, получения токенов и создания задач.
+- **AuthIntegrationTest** - Регистрация (успех, дубликат имени, дубликат email), логин (успех, неверный пароль, несуществующий пользователь).
+- **TaskCrudIntegrationTest** - Создание, получение по id, список задач (пустой и заполненный), полное и частичное обновление, удаление, скрытие удалённой задачи из списка.
+- **TaskAdminIntegrationTest** - Админ видит все задачи, удаляет и восстанавливает чужие задачи, юзер не может восстановить, восстановление несуществующей и уже активной задачи.
+- **TaskSecurityIntegrationTest** - Доступ без токена (403), доступ с невалидным токеном (403), доступ к чужой задаче (403), изоляция данных между пользователями.
+- **TaskFilterIntegrationTest** - Фильтр по статусу (TODO, IN_PROGRESS, DONE), фильтр по дедлайну (до даты, диапазон), пустой результат.
+- **TaskValidationIntegrationTest** - Пустой заголовок, слишком длинный заголовок, слишком длинное описание, пустое имя, короткий пароль, некорректный email, слишком длинное имя.
 
 Запуск:
 ```mvn test```
 
 ## Особенности
-- Мягкое удаление: задачи не удаляются физически — флаг deleted = true, что позволяет админу восстанавливать их через PATCH /{id}/restore. Обычный запрос findByIdAndDeletedFalse скрывает удалённые задачи.
-- Изоляция данных на уровне сервиса: findTaskAndCheckOwnership проверяет, что пользователь обращается к своей задаче, иначе ResourceAccessDeniedException (403). Админ обходит проверку.
-- Частичное обновление: PUT /api/tasks/{id принимает TaskUpdateRequest с nullable-полями — передаются только изменённые поля, null-поля не затрагиваются.
-- Метрики Micrometer: счётчики созданных, удалённых, восстановленных задач и неудачных логинов; gauge активных задач. Prometheus собирает метрики с /actuator/prometheus каждые 15 секунд.
-- RequestLoggingFilter: логирует метод, URI, статус-код и время выполнения каждого запроса в миллисекундах — работает до UsernamePasswordAuthenticationFilter.
-- JWT через jjwt 0.12.3: HMAC-SHA256, токен содержит subject (username), issuedAt, expiration. Срок жизни — 24 часа (настраиваемо через jwt.expiration-ms).
-- Профили: application.yml — PostgreSQL для продакшена, application-test.yml — H2 для тестов с ddl-auto = create-drop и отключённым Liquibase.
-- Docker multi-stage: сборка через maven:3.9-eclipse-temurin-21, рантайм — eclipse-temurin:21-jre-alpine с healthcheck на /actuator/health.
-- Grafana автопровижн: дашборды и datasource (Prometheus) провижнятся автоматически при старте контейнера, без ручной настройки.
+- **Мягкое удаление**: задачи не удаляются физически - флаг deleted = true, что позволяет админу восстанавливать их через PATCH /{id}/restore. Обычный запрос findByIdAndDeletedFalse скрывает удалённые задачи.
+- **Изоляция данных на уровне сервиса**: findTaskAndCheckOwnership проверяет, что пользователь обращается к своей задаче, иначе ResourceAccessDeniedException (403). Админ обходит проверку.
+- **Частичное обновление**: PUT /api/tasks/{id принимает TaskUpdateRequest с nullable-полями - передаются только изменённые поля, null-поля не затрагиваются.
+- **Метрики Micrometer**: счётчики созданных, удалённых, восстановленных задач и неудачных логинов; gauge активных задач. Prometheus собирает метрики с /actuator/prometheus каждые 15 секунд.
+- **RequestLoggingFilter**: логирует метод, URI, статус-код и время выполнения каждого запроса в миллисекундах - работает до UsernamePasswordAuthenticationFilter.
+- **JWT через jjwt 0.12.3**: HMAC-SHA256, токен содержит subject (username), issuedAt, expiration. Срок жизни - 24 часа (настраиваемо через jwt.expiration-ms).
+- **Профили**: application.yml - PostgreSQL для продакшена, application-test.yml - H2 для тестов с ddl-auto = create-drop и отключённым Liquibase.
+- **Docker multi-stage**: сборка через maven:3.9-eclipse-temurin-21, рантайм - eclipse-temurin:21-jre-alpine с healthcheck на /actuator/health.
+- **Grafana автопровижн**: дашборды и datasource (Prometheus) провижнятся автоматически при старте контейнера, без ручной настройки.
