@@ -49,7 +49,7 @@ JWT_EXPIRATION_MS=86400000
 ```
 
 Запустите все сервисы одной командой:
-docker-compose up -d --build
+```docker-compose up -d --build```
 
 Поднимутся:
 
