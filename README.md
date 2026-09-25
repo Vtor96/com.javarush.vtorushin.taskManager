@@ -80,54 +80,54 @@ java -jar target/task-manager-1.0-SNAPSHOT.jar \
 
 Или импортируйте проект в IntelliJ IDEA и запустите TaskManagerApplication напрямую.
 
-### Первый запуск: регистрация и логин
-# Регистрация
+## Первый запуск: регистрация и логин
+### Регистрация
 ```curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"testuser","password":"password123","email":"test@test.com"}'
 ```
 
-# Ответ: {"token":"eyJ...","tokenType":"Bearer"}
+### Ответ: {"token":"eyJ...","tokenType":"Bearer"}
 
-# Логин
+### Логин
 ```curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"testuser","password":"password123"}'
 ```
 
-# Создание задачи
+### Создание задачи
 ```curl -X POST http://localhost:8080/api/tasks \
   -H "Authorization: Bearer eyJ..." \
   -H "Content-Type: application/json" \
   -d '{"title":"Купить молоко","description":"2 литра","deadline":null}'
 ```
 
-# Получение всех задач
+### Получение всех задач
 ```curl http://localhost:8080/api/tasks \
   -H "Authorization: Bearer eyJ..."
 ```
 
-# Фильтр по статусу
+### Фильтр по статусу
 ```curl "http://localhost:8080/api/tasks?status=TODO" \
   -H "Authorization: Bearer eyJ..."
 ```
 
-# Фильтр по дедлайну
+### Фильтр по дедлайну
 ```curl "http://localhost:8080/api/tasks?deadlineBefore=2026-10-01T00:00:00" \
   -H "Authorization: Bearer eyJ..."
 ```
 
-# Удаление задачи
+### Удаление задачи
 ```curl -X DELETE http://localhost:8080/api/tasks/1 \
   -H "Authorization: Bearer eyJ..."
 ```
 
-# Восстановление (только админ)
+### Восстановление (только админ)
 ```curl -X PATCH http://localhost:8080/api/tasks/1/restore \
   -H "Authorization: Bearer eyJ_admin_token..."
 ```
 
-### Тесты
+## Тесты
 Интеграционные тесты запускаются на встроенной H2 (профиль test), Liquibase отключён — схема создаётся Hibernate (ddl-auto = create-drop). Базовый класс AbstractIntegrationTest предоставляет хелперы для регистрации, получения токенов и создания задач.
 - AuthIntegrationTest - Регистрация (успех, дубликат имени, дубликат email), логин (успех, неверный пароль, несуществующий пользователь).
 - TaskCrudIntegrationTest - Создание, получение по id, список задач (пустой и заполненный), полное и частичное обновление, удаление, скрытие удалённой задачи из списка.
@@ -139,7 +139,7 @@ java -jar target/task-manager-1.0-SNAPSHOT.jar \
 Запуск:
 ```mvn test```
 
-### Особенности
+## Особенности
 - Мягкое удаление: задачи не удаляются физически — флаг deleted = true, что позволяет админу восстанавливать их через PATCH /{id}/restore. Обычный запрос findByIdAndDeletedFalse скрывает удалённые задачи.
 - Изоляция данных на уровне сервиса: findTaskAndCheckOwnership проверяет, что пользователь обращается к своей задаче, иначе ResourceAccessDeniedException (403). Админ обходит проверку.
 - Частичное обновление: PUT /api/tasks/{id принимает TaskUpdateRequest с nullable-полями — передаются только изменённые поля, null-поля не затрагиваются.
